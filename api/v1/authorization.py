@@ -8,7 +8,8 @@ from utils.auth import generate_token
 from services.redis import get_redis
 
 
-router = APIRouter()
+router = APIRouter(prefix='/auth')
+
 
 @router.post('/login', response_model=Dict)
 async def login(
@@ -46,7 +47,7 @@ async def logout(
 
     jti = token['jti']
     get_redis().delete(jti)
-    
+
     return {'message': 'Logged out'}
 
 
