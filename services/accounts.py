@@ -17,7 +17,7 @@ class AccountsRequests(metaclass=Singleton):
 
     async def apost(self, url: str, data: dict):
         async with httpx.AsyncClient() as client:
-            return await client.post(url=url, data=data)
+            return await client.post(url=url, json=data)
         
 
 adapter = AccountsRequests()
