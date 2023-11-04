@@ -3,6 +3,7 @@ from uuid import uuid4
 import bcrypt
 import jwt
 from config.settings import get_settings
+from services.redis import get_redis
 
 
 settings = get_settings()
@@ -35,10 +36,10 @@ async def generate_token(user_id) -> dict:
 
     jti = await gen_jti()
 
-    await jwt_collection.insert_one({f'jti': user_id}) # redis
-
     access_exp = await get_token_exp(settings.jwt_access_lifetime_min)
     refresh_exp = await get_token_exp(settings.jwt_refresh_lifetime_min)
+
+    get_redis().set(jti, user_id, ex=refresh_exp)
 
     tokens = {
         "access_token": jwt.encode(
@@ -52,13 +53,12 @@ async def generate_token(user_id) -> dict:
     }
     return tokens
 
-# TODO turn to class
 
 async def decode(token):
-    decoded_token = await jwt.decode(token, settings.SECRET_KEY, algorithms=settings.JWT_ALGORITHM)
+    decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=settings.JWT_ALGORITHM)
     return decoded_token
 
 
 async def encode(token):
-    encoded_token = await jwt.encode(token, settings.SECRET_KEY, algorithms=settings.JWT_ALGORITHM)
+    encoded_token = jwt.encode(token, settings.SECRET_KEY, algorithms=settings.JWT_ALGORITHM)
     return encoded_token
