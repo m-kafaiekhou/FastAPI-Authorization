@@ -1,24 +1,11 @@
-import jwt
-import time
 from config.settings import get_settings
 from fastapi import Request, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from utils.auth import decode
+from services.redis import get_redis
 
 
 settings = get_settings()
-
-SECRET_KEY = settings.secret_key
-JWT_ALGORITHM = settings.jwt_algorithm
-
-
-async def decode(token):
-    decoded_token = jwt.decode(token, SECRET_KEY, algorithms=JWT_ALGORITHM)
-    return decoded_token
-
-
-async def encode(token):
-    encoded_token = jwt.encode(token, SECRET_KEY, algorithms=JWT_ALGORITHM)
-    return encoded_token
 
 
 class JWTBearer(HTTPBearer):
@@ -28,11 +15,11 @@ class JWTBearer(HTTPBearer):
     async def __call__(self, request: Request):
         credentials: HTTPAuthorizationCredentials = await super(JWTBearer, self).__call__(request)
         if credentials:
-            if not credentials.scheme == "Bearer":
+            if not credentials.scheme == settings.jwt_token_prefix:
                 raise HTTPException(status_code=403, detail="Invalid authentication scheme.")
             if not self.verify_jwt(credentials.credentials):
                 raise HTTPException(status_code=403, detail="Invalid token or expired token.")
-            return credentials.credentials
+            return await decode(credentials.credentials)
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
 
@@ -46,9 +33,18 @@ class JWTBearer(HTTPBearer):
             payload = None
         if payload:
             jti = payload['jti']
-            token = await get_one({'jti': jti}, jwt_collection)
+            token = await get_one({'jti': jti}, jwt_collection) # TODO redis
 
             if token is not None:
                 isTokenValid = True
         return isTokenValid
+    
+    async def get_the_token_from_header(self, token):
+        token = token.replace(settings.jwt_token_prefix, '').replace(' ', '')
+        return token
+    
+    async def validate_token(self, token):
+        cleaned_token = self.get_the_token_from_header(token)
+
+        sel
     
