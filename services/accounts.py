@@ -1,8 +1,9 @@
 import httpx
-import asyncio
+from utils.singleton import Singleton
+# import asyncio
 
 
-class AccountsRequests:
+class AccountsRequests(metaclass=Singleton):
     REGISTER_URL = 'localhost:8005/api/accounts/register/'
     LOGIN_URL = 'localhost:8005/api/accounts/login/'
 
@@ -18,3 +19,8 @@ class AccountsRequests:
         async with httpx.AsyncClient() as client:
             return await client.post(url=url, data=data)
         
+
+adapter = AccountsRequests()
+
+def get_adapter():
+    return adapter
