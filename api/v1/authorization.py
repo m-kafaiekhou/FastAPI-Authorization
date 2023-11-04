@@ -5,6 +5,7 @@ from schemas.authorization_schemas import *
 from services.authentications import JWTBearer
 from services.accounts import AccountsRequests
 from utils.auth import generate_token
+from services.redis import get_redis
 
 
 router = APIRouter()
@@ -43,7 +44,10 @@ async def logout(
         token: bool = Depends(JWTBearer())
     ):
 
-    pass
+    jti = token['jti']
+    get_redis().delete(jti)
+    
+    return {'message': 'Logged out'}
 
 
 @router.get('/refresh')
