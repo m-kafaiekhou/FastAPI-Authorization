@@ -33,7 +33,7 @@ class UserSchema(CreateUserSchema):
     
     @validator('address')
     def address_validator(cls, v):
-        if not re.search(r'^[a-zA-Z0-9_-]{10,254}$', v):
+        if not re.search(r'^[a-zA-Z0-9_- ]{10,254}$', v):
             raise ValueError('address should contain only Alphanumeric characters, and -_ ')
         return v
 
