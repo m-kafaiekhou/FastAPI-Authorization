@@ -3,6 +3,8 @@ from fastapi import Request, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from utils.auth import decode
 from services.redis import get_redis
+from fastapi.exceptions import HTTPException
+import jwt
 
 
 settings = get_settings()
@@ -29,15 +31,19 @@ class JWTBearer(HTTPBearer):
         try:
             payload = await decode(jwtoken)
 
-        except:
-            payload = None
-        if payload:
-            jti = payload['jti']
-            token = await get_one({'jti': jti}, jwt_collection) # TODO redis
+        except jwt.InvalidSignatureError:
+            raise HTTPException(status_code=403 ,detail='Invalid signature')
+        
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=401 ,detail='Token Expired')
 
-            if token is not None:
-                isTokenValid = True
-        return isTokenValid
+        jti = payload['jti']
+        token = get_redis().get(jti)
+
+        if token:
+            return payload
+        raise HTTPException(status_code=403, detail='token not in white list')
     
     async def get_the_token_from_header(self, token):
         token = token.replace(settings.jwt_token_prefix, '').replace(' ', '')
@@ -45,6 +51,6 @@ class JWTBearer(HTTPBearer):
     
     async def validate_token(self, token):
         cleaned_token = self.get_the_token_from_header(token)
-
-        sel
+        payload = self.verify_jwt(cleaned_token)
+        return payload
     
