@@ -1,26 +1,20 @@
 version: '3.3'
 
 services:
-    mongo:
-      ports:
-          - '27017:27017'
-      container_name: mongo
-      restart: always
-      logging:
-          options:
-              max-size: 1g
-      environment:
-          - MONGO_INITDB_ROOT_USERNAME=root
-          - MONGO_INITDB_ROOT_PASSWORD=root
-      image: mongo
+  auth:
+    container_name: auth
+    build: .
+    volumes:
+      - auth_data:/usr/share/auth/data
+    networks:
+      main:
+    ports:
+      - "8000:8000"
+    restart: always
 
-    redis:
-        container_name: redis
-        image: "redis:alpine"
-        volumes:
-          - redis_data:/usr/share/redis/data
-        networks:
-          main:
-        ports:
-          - "6379:6379"
-        restart: always
+
+networks:
+  main:
+
+volumes:
+  auth_data:
