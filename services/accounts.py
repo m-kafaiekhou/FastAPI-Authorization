@@ -4,8 +4,8 @@ from utils.singleton import Singleton
 
 
 class AccountsRequests(metaclass=Singleton):
-    REGISTER_URL = 'localhost:8005/api/accounts/register/'
-    LOGIN_URL = 'localhost:8005/api/accounts/login/'
+    REGISTER_URL = 'http://localhost:8001/api/accounts/register'
+    LOGIN_URL = 'http://localhost:8001/api/accounts/login'
 
     async def register(self, data: dict):
         response = await self.apost(self.REGISTER_URL, data)
