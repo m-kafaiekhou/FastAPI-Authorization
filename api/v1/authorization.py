@@ -1,5 +1,5 @@
 from typing import Dict
-from fastapi import Body, Depends, HTTPException, Header, APIRouter
+from fastapi import Body, Depends, HTTPException, Header, APIRouter, Response
 
 from schemas.authorization_schemas import *
 from services.authentications import JWTBearer
@@ -20,6 +20,7 @@ async def login(
     response = await adapter.login(payload.model_dump())
 
     if response.status_code == 200:
+
         token = await generate_token(response.json().get('user'))
         return token
     
@@ -34,10 +35,11 @@ async def register(
     ):
 
     adapter = AccountsRequests()
-
+    print(payload.model_dump())
     response = await adapter.register(payload.model_dump())
-
-    return response
+    content = response.content
+    print('auth'* 20)
+    return Response(content=content, status_code=response.status_code)
 
 
 @router.post('/logout', response_model=Dict)
