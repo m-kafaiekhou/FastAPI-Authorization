@@ -4,6 +4,7 @@ from fastapi import Body, Depends, HTTPException, Header, APIRouter, Response
 from schemas.authorization_schemas import *
 from services.authentications import JWTBearer
 from services.accounts import AccountsRequests
+from services.notification import NotificationRequests
 from utils.auth import generate_token
 from services.redis import get_redis
 
@@ -20,8 +21,8 @@ async def login(
     response = await adapter.login(payload.model_dump())
 
     if response.status_code == 200:
-
-        token = await generate_token(response.json().get('user'))
+        
+        token = await generate_token(response.json().get('user_id'), response.json().get('username'))
         return token
     
     else:
@@ -48,16 +49,18 @@ async def logout(
     ):
 
     jti = token['jti']
-    get_redis().delete(jti)
+    await get_redis().delete(jti)
 
     return {'message': 'Logged out'}
 
 
-@router.get('/refresh')
-async def refresh(token: TokenSchema = Body()):
+@router.post('/refresh')
+async def refresh(payload: TokenSchema = Body()):
     try:
-        payload = JWTBearer().validate_token(token)
-    except:
+        payload = await JWTBearer().validate_token(payload.refresh)
+        print(payload)
+    except Exception as e:
+        print(e)
         raise HTTPException(403, detail='Invalid or expired token')
     else:
         new_token = await generate_token(payload['user_identifier'])

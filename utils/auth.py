@@ -25,40 +25,41 @@ async def gen_jti():
     return uuid4().hex
 
 
+async def decode(token):
+    decoded_token = jwt.decode(token, settings.secret_key, algorithm=settings.jwt_algorithm)
+    return decoded_token
+
+
+async def encode(token):
+    encoded_token = jwt.encode(token, settings.secret_key, algorithm=settings.jwt_algorithm)
+    return encoded_token
+
+
 async def get_token_exp(mins=60*24*7):
     now = datetime.datetime.utcnow()
     expire_time = now + datetime.timedelta(minutes=mins)
-    return expire_time
+    return int(expire_time.timestamp())
 
 
-async def generate_token(user_id) -> dict:
+async def generate_token(user_id, username) -> dict:
     """Generate access token for user"""
 
     jti = await gen_jti()
 
     access_exp = await get_token_exp(settings.jwt_access_lifetime_min)
     refresh_exp = await get_token_exp(settings.jwt_refresh_lifetime_min)
-
-    get_redis().set(jti, user_id, ex=refresh_exp)
+    print(refresh_exp)
+    await get_redis().set(jti, user_id, ex=refresh_exp)
 
     tokens = {
-        "access_token": jwt.encode(
-            {'type': 'access', 'exp': access_exp, "user_identifier": user_id, 'jti': jti},
-            settings.secret_key
+        "access_token": await encode(
+            {'type': 'access', 'exp': access_exp, "user_identifier": user_id, 'username': username, 'jti': jti}
         ),
-        "refresh_token": jwt.encode(
-            {'type': 'refresh', 'exp': refresh_exp, "user_identifier": user_id, 'jti': jti},
-            settings.secret_key
+        "refresh_token": await encode(
+            {'type': 'refresh', 'exp': refresh_exp, "user_identifier": user_id, 'username': username, 'jti': jti}
         )
     }
     return tokens
 
 
-async def decode(token):
-    decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=settings.JWT_ALGORITHM)
-    return decoded_token
-
-
-async def encode(token):
-    encoded_token = jwt.encode(token, settings.SECRET_KEY, algorithms=settings.JWT_ALGORITHM)
-    return encoded_token
+async def send_otp(user_id, email) 

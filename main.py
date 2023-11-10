@@ -12,4 +12,4 @@ app.include_router(authorization.router, prefix='/api')
 
 
 if __name__ == "__main__":
-    uvicorn.run("__main__:app", host="0.0.0.0", port=8000, log_level="debug", reload=True)
+    uvicorn.run("__main__:app", host="0.0.0.0", port=8005, log_level="debug", reload=True)
